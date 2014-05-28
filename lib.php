@@ -231,11 +231,11 @@ class enrol_ilbeadtutorado_plugin extends enrol_plugin {
                 $error .= '<br/><br/><p>'.get_string('maxongoingmessage', 'enrol_ilbeadtutorado', count($ongoing)).'</p>';
                 $error .= '<p><strong>'.get_string('ongoingcourses', 'enrol_ilbeadtutorado').'</strong></p>';
                 $table = new html_table();
-                $table->head = array(get_string('coursename', 'enrol_ilbeadtutorado'), get_string('timestart', 'enrol_ilbeadtutorado'), get_string('timeend', 'enrol_ilbeadtutorado'), get_string('abandonpunishment', 'enrol_ilbeadtutorado'));
+                $table->head = array(get_string('coursename', 'enrol_ilbeadtutorado'), get_string('startdate', 'enrol_ilbeadtutorado'));
                 $tabledata = array();
                 foreach ($ongoing as $course) {
                     $link = '<a href="'.course_get_url($course).'">'.$course->fullname.'</a>';
-                    $tabledata[] = array($link, userdate($course->timestart), userdate($course->timeend), $course->abandonpunishment);
+                    $tabledata[] = array($link, userdate($course->startdate));
                 }
                 $table->data = $tabledata;
                 $error .= html_writer::table($table);
@@ -633,6 +633,7 @@ class enrol_ilbeadtutorado_plugin extends enrol_plugin {
     public function get_ongoing($instance) {
         global $DB;
         global $USER;
+        $course = $DB->get_record('course', array('id'=>$instance->courseid), '*', MUST_EXIST);
         $sql = "select c.*, ue.timestart, ue.timeend, e.customint8 as abandonpunishment
                 from {user_enrolments} ue
                   join {enrol} e on e.id = ue.enrolid
@@ -641,9 +642,8 @@ class enrol_ilbeadtutorado_plugin extends enrol_plugin {
                 where e.enrol = 'ilbeadtutorado'
                   and cc.timecompleted is null
                   and ue.userid = ?
-                  and ? between ue.timestart and ue.timeend + (e.customint8*86400)";
-        $time = time();
-        return $DB->get_records_sql($sql, array($USER->id, time()));
+                  and c.category = ?";
+        return $DB->get_records_sql($sql, array($USER->id, $course->category));
     }
 
     /**
