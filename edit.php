@@ -102,6 +102,7 @@ if ($mform->is_cancelled()) {
         $instance->customint6     = $data->customint6;
         $instance->customint7     = $data->customint7;
         $instance->customint8     = $data->customint8;
+        $instance->customdec1     = $data->customdec1;
         $instance->customtext1    = $data->customtext1;
         $instance->customtext2    = serialize($data->customtext2);
         $instance->roleid         = $data->roleid;
@@ -131,6 +132,7 @@ if ($mform->is_cancelled()) {
             'customint6'      => $data->customint6,
             'customint7'      => $data->customint7,
             'customint8'      => $data->customint8,
+            'customdec1'      => $data->customdec1;
             'customtext1'     => $data->customtext1,
             'customtext2'     => serialize($data->customtext2),
             'roleid'          => $data->roleid,

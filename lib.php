@@ -247,18 +247,29 @@ class enrol_ilbeadtutorado_plugin extends enrol_plugin {
         $course = $DB->get_record('course', array('id'=>$instance->courseid), '*', MUST_EXIST);
         $course_prefix = explode('.', $course->idnumber);
         $course_prefix = $course_prefix[0];
+        $same_courses = $this->get_same_courses($instance, $course_prefix);
 
-        foreach ($ongoing as $course) {
-            $ongoing_prefix = explode('.', $course->idnumber);
-            $ongoing_prefix = $ongoing_prefix[0];
-            if ($course_prefix == $ongoing_prefix) {
-                $error  = $OUTPUT->error_text(get_string('samecoursealert', 'enrol_ilbeadtutorado'));
-                $link = '<a href="'.course_get_url($course).'">'.$course->fullname.'</a>';
-                $error .= '<br/><br/><p>'.get_string('samecoursemessage', 'enrol_ilbeadtutorado', $link).'</p>';
-                $error = $OUTPUT->box($error).$OUTPUT->continue_button("$CFG->wwwroot/index.php");
-                return $error;
+        // Search for abandon/reproval facts
+        $count = 0;
+
+        foreach ($same_courses as $course) {
+            $count++;
+            $link = '<a href="'.course_get_url($course).'">'.$course->fullname.'</a>';
+            if ($course->user_enroled) {
+                if (($count <= $instance->customint8) and ($course->finalgrade === NULL)) {
+                    // Punish for abandon
+                    $error = $OUTPUT->error_text(get_string('abandonalert', 'enrol_ilbeadtutorado', $link));
+                    $error = $OUTPUT->box($error).$OUTPUT->continue_button("$CFG->wwwroot/index.php");
+                    return $error;
+                }
+                if (($count <= $instance->customdec1) and ($course->finalgrade < $course->gradepass)) {
+                    // Punish for reproval
+                    $error = $OUTPUT->error_text(get_string('reprovalalert', 'enrol_ilbeadtutorado', $link));
+                    $error = $OUTPUT->box($error).$OUTPUT->continue_button("$CFG->wwwroot/index.php");
+                    return $error;
+                }
             }
-        }
+        } 
 
         if ($instance->customint5) {
             require_once("$CFG->dirroot/cohort/lib.php");
@@ -666,4 +677,41 @@ class enrol_ilbeadtutorado_plugin extends enrol_plugin {
 
         return false; // Default max not reached
     }
+    
+    /**
+     * Get all same courses tried by the user ordered by startdate descending
+     *
+     * @param stdClass $instance
+     * @param str $course_prefix
+     */
+
+     public function get_same_courses($instance, $course_prefix) {
+         global $DB;
+         global $USER;
+
+         if ($instance->customint8 >= $instance->customdec1) {
+             $limitnum = $instance->customint8;
+         } else {
+             $limitnum = int($instance->customdec1);
+         }
+
+         if ($limitnum <= 0) {
+             return array(); // No validations
+         }
+
+         $idnumberlike = $DB->sql_like('c.idnumber', "'$course_prefix%'");
+
+         $sql = "select c.*, cc.gradepass, gg.finalgrade, ue.userid as user_enroled
+                 from {course} c
+                   inner join {enrol} e on e.courseid = c.id and e.enrol = 'ilbeadtutorado'
+                   inner join {grade_items} gi on gi.courseid = c.id and gi.itemtype = 'course'
+                   left outer join {user_enrolments} ue on ue.enrolid = e.id and ue.userid = ?
+                   left outer join {course_completion_criteria} cc on cc.course = c.id and cc.module is null and cc.gradepass > 0
+                   left outer join {grade_grades} gg on gg.itemid = gi.id and gg.userid = ue.userid
+                 where $idnumberlike
+                   and e.id <> ?
+                 order by startdate desc";
+
+         return $DB->get_records_sql($sql, array($USER->id, $instance->id), 0, $limitnum);
+     }
 }

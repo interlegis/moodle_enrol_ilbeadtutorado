@@ -112,6 +112,10 @@ class enrol_ilbeadtutorado_edit_form extends moodleform {
         $mform->addHelpButton('customint8', 'abandonpunishment', 'enrol_ilbeadtutorado');
         $mform->setType('customint8', PARAM_INT);
 
+        $mform->addElement('text', 'customdec1', get_string('reprovalpunishment', 'enrol_ilbeadtutorado'));
+        $mform->addHelpButton('customdec1', 'reprovalpunishment', 'enrol_ilbeadtutorado');
+        $mform->setType('customdec1', PARAM_INT);
+
         $cohorts = array(0 => get_string('no'));
         list($sqlparents, $params) = $DB->get_in_or_equal($context->get_parent_context_ids(), SQL_PARAMS_NAMED);
         $params['current'] = $instance->customint5;
