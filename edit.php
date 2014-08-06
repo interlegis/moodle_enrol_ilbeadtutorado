@@ -132,7 +132,7 @@ if ($mform->is_cancelled()) {
             'customint6'      => $data->customint6,
             'customint7'      => $data->customint7,
             'customint8'      => $data->customint8,
-            'customdec1'      => $data->customdec1;
+            'customdec1'      => $data->customdec1,
             'customtext1'     => $data->customtext1,
             'customtext2'     => serialize($data->customtext2),
             'roleid'          => $data->roleid,
