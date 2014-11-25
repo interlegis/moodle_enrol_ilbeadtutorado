@@ -294,7 +294,9 @@ class enrol_ilbeadtutorado_plugin extends enrol_plugin {
                 $enrol = enrol_get_plugin('ilbeadtutorado');
                 $timestart = time();
                 if ($instance->enrolperiod) {
-                    $timeend = $timestart + $instance->enrolperiod;
+                    $timeend = date("Y/m/d", (string)($timestart + $instance->enrolperiod));
+                    list($year, $month, $day) = split("/", $timeend);
+                    $timeend = (int)strtotime("$year-$month-$day 23:59:59");
                 } else {
                     $timeend = 0;
                 }
